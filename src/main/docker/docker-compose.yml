@@ -1,0 +1,78 @@
+version: '3.2'
+services:
+
+  postgresdb:
+    image: postgres:11.3
+    container_name: postgresdb_ristores
+    environment:
+     - POSTGRES_USER=ristores
+     - POSTGRES_PASSWORD=ristores
+     - POSTGRES_DB=ristores
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+     - 5432:5432
+    networks:
+      - risto-net
+    restart: always
+    
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+     - PGADMIN_DEFAULT_EMAIL=ristores@ristores.net
+     - PGADMIN_DEFAULT_PASSWORD=ristores
+     - PGADMIN_LISTEN_PORT=8081
+    ports:
+     - 8081:8081
+    volumes:
+     - pgadmin-data:/var/lib/pgadmin
+    links:
+     - postgresdb
+    depends_on:
+     - postgresdb
+    networks:
+      - risto-net
+    restart: always
+
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.9.2
+    container_name: elasticsearch_ristores
+    environment:
+     - discovery.type=single-node
+     - "TZ=Europe/Zurich"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+     - 9200:9200
+     - 9300:9300
+    networks:
+      - risto-net
+    restart: always
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana-oss:7.9.2
+    container_name: kibana
+    depends_on:
+      - elastic
+    ports:
+      - 5601:5601
+    environment:
+      ELASTICSEARCH_URL: http://elastic:9200
+      ELASTICSEARCH_HOSTS: http://elastic:9200
+      TZ: "Europe/Zurich"
+    networks:
+      - risto-net
+    restart: always
+
+networks:
+  risto-net:
+    driver: bridge
+volumes:
+  db-data:
+  pgadmin-data:
+

@@ -1,0 +1,268 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Ristores (Ristorante Menu Reservations) </title>
+    <!-- Semantic UI -->
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css"/>
+    <script src="//code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
+    <style type="text/css">
+        .ui.menu .item {
+            font-size: 20px;
+        }
+        .presentation {
+            margin-top: 5em;
+            background-color: #F0F0F0;
+            border-bottom: 1px solid #CCC;
+            border-top: 1px solid #CCC;
+            padding-top: 1em;
+            padding-bottom: 1em;
+        }
+        .search {
+            margin-top: 2em;
+        }
+        .menus {
+            margin-top: 2em;
+        }
+        .menus .meta {
+            margin-top: 5px;
+            margin-bottom: 15px;
+        }
+    </style>
+    <!-- Load AngularJS -->
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+    <script type="text/javascript">
+      var app = angular.module("RistoresManagement", []);
+
+      //Controller Part
+      app.controller("RistoresManagementController", ['$scope', '$http', '$httpParamSerializerJQLike', function ($scope, $http, $httpParamSerializerJQLike) {
+
+        // initialize page with default data which is blank in this example
+        $scope.menus = [];
+        $scope.pattern = '16.12.2020';
+        $scope.form = {};
+
+        // initializes the data from the REST endpoint
+        _refreshPageData();
+        $('.menus').show();
+        _clearForm();
+
+        $scope.refresh = function () {
+            _refreshPageData();
+        }
+
+        $scope.remove = function (type, element) {
+            $http({
+                method: 'DELETE',
+                url: '/ristores/' + type + '/' + element.id
+            }).then(_success, _error);
+        };
+
+        $scope.showAddMenuModal = function () {
+            $scope.menuModalTitle = "Add menu";
+            $('#modal-menu').modal('show');
+        }
+
+        $scope.showEditMenuModal = function (menu) {
+            $scope.menuModalTitle = "Edit menu " + menu.menuTitle + ' ' + menu.menuContent;
+            $scope.form.menu = menu;
+            $('#modal-menu').modal('show');
+        }
+
+        $scope.addOrEditMenu = function () {
+            data = {};
+            if ($scope.form.menu.id == -1) {
+                method = 'PUT';
+                url = '/ristores/menu';
+                data.menuTitle = $scope.form.menu.menuTitle;
+                data.menuDate = $scope.form.menu.menuDate;
+                data.menuContent = $scope.form.menu.menuContent;
+            } else {
+                method = 'POST';
+                url = '/ristores/menu/' + $scope.form.menu.id;
+                data.menuTitle = $scope.form.menu.menuTitle;
+                data.menuDate = $scope.form.menu.menuDate;
+                data.menuContent = $scope.form.menu.menuContent;
+            }
+            $http({
+                method: method,
+                url: url,
+                data: $httpParamSerializerJQLike(data),
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            }).then(_success, _error);
+        }
+
+        $scope.showGuestModal = function (menu) {
+            console.log("menu id is: " + menu.id);
+            $scope.form.guest.menuId = menu.id;
+            $('#modal-guest').modal('show');
+        }
+
+        $scope.addGuest = function () {
+            console.log("scope menu id is: " +  $scope.form.guest.menuId);
+
+            data = {
+                menuId: $scope.form.guest.menuId,
+                guestName: $scope.form.guest.guestName
+            };
+            $http({
+                method: 'PUT',
+                url: '/ristores/guest/',
+                data: $httpParamSerializerJQLike(data),
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            }).then(_success, _error);
+        }
+
+        function _refreshPageData() {
+            $http({
+                method: 'GET',
+                url: '/ristores/menu/search?pattern=' + $scope.pattern
+            }).then(function successCallback(response) {
+                $scope.menus = response.data;
+            }, function errorCallback(response) {
+                console.log(response.statusText);
+            });
+        }
+
+        function _success(response) {
+            $scope.pattern = '';
+            _refreshPageData();
+            _clearForm();
+        }
+
+        function _clearForm() {
+            $scope.form.menu = {
+                id: -1,
+                menuTitle: '',
+                menuDate: '',
+                menuContent: ''
+            };
+            $scope.form.guest = {
+                id: -1,
+                guestName: '',
+                menuId: ''
+            };
+        }
+
+        function _error(response) {
+            alert(response.data.message || response.statusText);
+            _clearForm();
+        }
+      }]);
+    </script>
+</head>
+<body ng-app="RistoresManagement" ng-controller="RistoresManagementController">
+    <div class="ui fixed inverted menu">
+        <div class="ui container">
+            <span class="active orange item">Ristores (Ristorante Menu Reservation)</span>
+        </div>
+    </div>
+     <div class="presentation">
+        <div class="ui main container">
+            <i class="utensils icon"></i>
+            <span> Welcome to Ristorante Pasta. Sign up for the menu of the day:</span>
+        </div>
+    </div>
+    <div class="ui container search">
+        <form class="ui form" ng-submit="refresh()">
+            <div class="fluid big left ui action input">
+                <input type="text" placeholder="Search for a menu or a guest." ng-model="pattern">
+                <button class="ui green labeled icon button" ng-click="refresh()"><i class="search icon"></i> Search</button>
+            </div>
+        </form>
+    </div>
+    <div class="ui container menus" style="display:none;">
+        <div class="ui cards">
+            <div class="card" ng-repeat="menu in menus">
+                <div class="content">
+                    <span ng-if="menu.menuDate"> {{ menu.menuDate | date: 'dd.MM.yyyy'}}</span> 
+                    <div class="header"> {{ menu.menuTitle }}<br>{{ menu.menuContent }}</div>
+                    <div class="meta">
+                        {{ menu.guests.length }} <i class="user icon"></i>
+                        <button class="ui basic green icon button mini right floated" ng-click="showGuestModal(menu)"><i class="plus circle icon"></i> Add Guest</button>
+                    </div>
+                    <div class="description">
+                        <div ng-repeat="guest in menu.guests">
+                            <div>
+                                {{ guest.guestName }}
+                                <a ng-click="remove('guest', guest)"><i class="trash red alternate outline right floated icon"></i></a>
+                            </div>
+                            <div class="ui divider"></div>
+                        </div>
+                    </div>
+                    <div class="extra content">
+                        <div class="ui two buttons">
+                            <button class="ui basic green button" ng-click="showEditMenuModal(menu)"><i class="pencil alternate icon"></i> Edit</button>
+                            <button class="ui basic red button" ng-click="remove('menu', menu)"><i class="trash alternate outline icon"></i> Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="content">
+                    <button class="ui green labeled icon button" ng-click="showAddMenuModal()"><i class="plus circle icon"></i> Add Menu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ui modal" id="modal-menu">
+        <i class="close icon"></i>
+        <div class="header">
+            {{ menuModalTitle }}
+        </div>
+        <div class="content">
+            <div class="description">
+                <form class="ui form" id="menu-form">
+                    <input type="hidden" name="menuId" ng-model="form.menu.id" />
+                    <div class="required field">
+                        <label>Menu title</label>
+                        <input type="text" name="menuTitle" placeholder="Menu Title" ng-model="form.menu.menuTitle" required>
+                    </div>
+                    <div class="required field">
+                        <label>Menu description</label>
+                        <input type="text" name="menuContent" placeholder="Menu description" ng-model="form.menu.menuContent" required>
+                    </div>
+                    <div class="required field">
+                        <label>Menu date</label>
+                        <input type="text" name="menuDate" placeholder="Menu date" ng-model="form.menu.menuDate" required>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="actions">
+            <button type="submit" class="ui positive right labeled icon button" form="menu-form" ng-click="addOrEditMenu()">
+                <i class="checkmark icon"></i>
+                Submit
+            </button>
+        </div>
+    </div>
+    <div class="ui modal" id="modal-guest">
+        <i class="close icon"></i>
+        <div class="header">
+            Add Guest
+        </div>
+        <div class="content">
+            <div class="description">
+                <form class="ui form" id="guest-form">
+                    <input type="hidden" name="menuId" ng-model="form.guest.menuId" />
+                    <div class="required field">
+                        <label>Guest Name</label>
+                        <input type="text" name="guestName" placeholder="Guest Name" ng-model="form.guest.guestName" required>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="actions">
+            <button type="submit" class="ui positive right labeled icon button" form="guest-form" ng-click="addGuest()">
+                <i class="checkmark icon"></i>
+                Submit
+            </button>
+        </div>
+    </div>
+</body>
+</html>
