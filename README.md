@@ -1,8 +1,6 @@
-# ristores project
 
 # Ristorante Menu Reservation
-# Easy to use Menu Reservation with Fulltext-Search.
-
+Easy to use Menu Reservation with Fulltext-Search.
 
 ![Alt text](https://github.com/mbuchser/ristores/blob/master/src/main/resources/screenshot.jpg?raw=true "Overview")
 
