@@ -1,6 +1,6 @@
 
 # Ristorante Menu Reservation
-Easy to use Menu Reservation with Fulltext-Search.
+Easy to use menu reservation with fulltext-search.
 
 ![Alt text](https://github.com/mbuchser/ristores/blob/master/src/main/resources/screenshot.jpg?raw=true "Overview")
 
@@ -16,7 +16,7 @@ Change into the subdirectory /src/main/docker and enter:
 
 > docker-compose up -d
 
-This will start a Postgres Db and a Elasticsearch single node instance
+This will start a Postgres DB and an Elasticsearch single node instance
 
 
 Connection properties for the Agroal datasource are defined in the standard Quarkus configuration file,
